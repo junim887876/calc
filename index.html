@@ -3,225 +3,250 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Solar Invest - Meu Lucro</title>
-    
-    <!-- Tailwind CSS -->
+    <title>SolarInvest Calculadora</title>
+    <!-- Tailwind CSS para design moderno -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome (Ícones) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Fonte Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0b0f19;
-            color: #ffffff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             -webkit-tap-highlight-color: transparent;
+            background: radial-gradient(circle at 50% -20%, #1e1b4b, #090d16 80%);
         }
-        .card-shadow {
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+
+        /* Efeito Apple Glassmorphism de alta fidelidade */
+        .apple-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .apple-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Transições suaves para os modos de cálculo */
+        .tab-glow {
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        /* Ocultar setas dos campos numéricos */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
         }
     </style>
 </head>
-<body class="p-4 max-w-md mx-auto min-h-screen flex flex-col justify-between">
+<body class="text-slate-100 min-h-screen flex flex-col justify-between p-3 selection:bg-indigo-500 selection:text-white">
 
-    <div>
-        <!-- CABEÇALHO -->
-        <header class="flex items-center justify-between py-3 mb-4 border-b border-slate-800">
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-                    <i class="fa-solid fa-sun text-2xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-black text-white leading-tight">Solar Invest</h1>
-                    <p class="text-xs text-slate-400 font-medium">Painel do Sócio</p>
-                </div>
-            </div>
-            <button onclick="recarregarDados()" class="p-3 bg-slate-800 active:bg-slate-700 rounded-xl text-slate-300">
-                <i class="fa-solid fa-rotate-right text-lg"></i>
-            </button>
-        </header>
-
-        <!-- SELETOR DE MÊS GRANDE -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2 mb-5 flex items-center justify-between">
-            <button onclick="mudarMes(-1)" class="w-12 h-12 bg-slate-800 active:bg-emerald-600 rounded-xl flex items-center justify-center text-white text-lg">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <div class="text-center">
-                <span class="text-xs uppercase font-bold tracking-wider text-slate-400 block">Período</span>
-                <span id="label-mes" class="text-lg font-black text-white capitalize">Outubro</span>
-            </div>
-            <button onclick="mudarMes(1)" class="w-12 h-12 bg-slate-800 active:bg-emerald-600 rounded-xl flex items-center justify-center text-white text-lg">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-        </div>
-
-        <!-- CARD PRINCIPAL: LUCRO TOTAL DO SÓCIO -->
-        <div class="bg-gradient-to-br from-emerald-900/40 via-slate-900 to-slate-900 border-2 border-emerald-500/50 rounded-3xl p-6 text-center mb-6 card-shadow">
-            <div class="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full mb-3">
-                <i class="fa-solid fa-wallet text-emerald-400 text-sm"></i>
-                <span class="text-xs font-bold uppercase text-emerald-300 tracking-wide">Sua Parte do Lucro</span>
-            </div>
-            
-            <div id="lucro-total-socio" class="text-4xl sm:text-5xl font-black text-emerald-400 tracking-tight my-2">
-                R$ 0,00
-            </div>
-            
-            <p class="text-xs text-slate-400 font-medium">
-                Valor líquido já dividido em 50%
-            </p>
-        </div>
-
-        <!-- TÍTULO DA LISTA -->
-        <div class="flex items-center justify-between mb-3 px-1">
-            <h2 class="text-base font-bold text-slate-200">Detalhamento por Cliente</h2>
-            <span id="qtd-clientes" class="text-xs font-bold bg-slate-800 text-slate-300 px-2.5 py-1 rounded-lg">3 Clientes</span>
-        </div>
-
-        <!-- LISTA DE CARDS DE CLIENTES -->
-        <div id="lista-clientes" class="space-y-3">
-            <!-- Os cards dos clientes serão gerados aqui dinamicamente -->
-        </div>
+    <!-- Orbes sutis de luz para efeito translúcido Apple -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-80 h-80 bg-indigo-500/15 rounded-full blur-[100px]"></div>
+        <div class="absolute bottom-10 left-10 w-60 h-60 bg-amber-500/10 rounded-full blur-[90px]"></div>
     </div>
 
-    <!-- RODAPÉ SIMPLES -->
-    <footer class="text-center py-4 mt-6 text-slate-500 text-xs border-t border-slate-900">
-        Solar Invest • Atualizado automaticamente
+    <!-- Conteúdo Principal Completo sem Rolar no Celular -->
+    <main class="relative z-10 max-w-sm mx-auto w-full my-auto space-y-3">
+
+        <!-- Header Apple Style -->
+        <header class="text-center pt-1">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full apple-card text-[11px] font-medium text-slate-300 mb-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                1 kWh = R$ 1,14
+            </div>
+            <h1 class="text-xl font-bold tracking-tight text-white">SolarInvest Calculadora</h1>
+        </header>
+
+        <!-- Seletor de Modo Estilo iOS Segmented Control -->
+        <section class="apple-glass rounded-2xl p-1.5 flex items-center gap-1 relative">
+            <button id="btnModoReais" onclick="setModo('reais')" 
+                class="flex-1 py-2 text-xs font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 bg-white/15 text-white tab-glow">
+                <span>💰</span> Inserir Reais (R$)
+            </button>
+            <button id="btnModoKwh" onclick="setModo('kwh')" 
+                class="flex-1 py-2 text-xs font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 text-slate-400 hover:text-white">
+                <span>⚡</span> Inserir kWh
+            </button>
+        </section>
+
+        <!-- Painel de Input Apple Glass -->
+        <section class="apple-glass rounded-2xl p-3.5 space-y-3">
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-300">
+                <span id="labelEntrada">DIGITE O VALOR DA FATURA:</span>
+                <span id="sublabelEntrada" class="text-[10px] text-amber-400">Com taxas inclusas</span>
+            </div>
+
+            <!-- Input Principal -->
+            <div class="bg-black/30 border border-white/15 focus-within:border-indigo-400/80 rounded-xl p-2.5 transition-all">
+                <div class="flex items-center gap-2">
+                    <span id="simboloEntrada" class="text-2xl font-bold text-amber-400">R$</span>
+                    <input type="number" id="inputPrincipal" placeholder="0.00" value="100" min="0" step="any"
+                        class="w-full bg-transparent text-2xl font-extrabold text-white outline-none placeholder:text-slate-600"
+                        oninput="calcular()">
+                </div>
+            </div>
+
+            <!-- Resumo Explicativo Dinâmico -->
+            <div id="explicacaoModo" class="bg-white/5 px-3 py-1.5 rounded-xl text-[11px] text-slate-300 text-center font-medium border border-white/5">
+                Descontando a taxa de cada opção, você consome:
+            </div>
+        </section>
+
+        <!-- Comparativo dos 2 Quadros de Iluminação -->
+        <section class="grid grid-cols-2 gap-2.5">
+
+            <!-- QUADRADO 1 (Luz R$ 11,36) -->
+            <div class="apple-card rounded-2xl p-3 flex flex-col justify-between border-amber-500/25 relative overflow-hidden group">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[11px] font-bold text-amber-400 uppercase tracking-wider">OPÇÃO 1</span>
+                    <span class="text-[10px] text-slate-400 bg-white/5 px-1.5 py-0.5 rounded-md">Taxa R$ 11,36</span>
+                </div>
+
+                <div class="space-y-1.5">
+                    <div>
+                        <span id="lblLinha1_Q1" class="text-[10px] text-slate-400 block">Sobra para consumo</span>
+                        <span id="valLinha1_Q1" class="text-sm font-semibold text-emerald-400">R$ 88,64</span>
+                    </div>
+
+                    <div class="pt-2 border-t border-white/10">
+                        <span id="lblLinha2_Q1" class="text-[9px] uppercase tracking-wider font-bold text-slate-400 block">Consumo Real</span>
+                        <span id="valLinha2_Q1" class="text-lg font-black text-white">77,75 kWh</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUADRADO 2 (Luz R$ 21,08) -->
+            <div class="apple-card rounded-2xl p-3 flex flex-col justify-between border-indigo-500/25 relative overflow-hidden group">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[11px] font-bold text-indigo-400 uppercase tracking-wider">OPÇÃO 2</span>
+                    <span class="text-[10px] text-slate-400 bg-white/5 px-1.5 py-0.5 rounded-md">Taxa R$ 21,08</span>
+                </div>
+
+                <div class="space-y-1.5">
+                    <div>
+                        <span id="lblLinha1_Q2" class="text-[10px] text-slate-400 block">Sobra para consumo</span>
+                        <span id="valLinha1_Q2" class="text-sm font-semibold text-emerald-400">R$ 78,92</span>
+                    </div>
+
+                    <div class="pt-2 border-t border-white/10">
+                        <span id="lblLinha2_Q2" class="text-[9px] uppercase tracking-wider font-bold text-slate-400 block">Consumo Real</span>
+                        <span id="valLinha2_Q2" class="text-lg font-black text-white">69,23 kWh</span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="relative z-10 text-center text-[10px] text-slate-500 py-1">
+        Desenvolvido by FlowNest (IA)
     </footer>
 
+    <!-- Lógica JavaScript Dinâmica -->
     <script>
-        // CONFIGURAÇÕES E DADOS DA PLANILHA
-        const SHEET_ID = '1IxzUCFbGIxOMrCGnjfHNlB16ll64TKh75SDOV1oOnWw';
-        const TARIFA_KWH = 0.81;
-        const CUSTO_KWH_USINA = 0.175126;
+        const TAXA_1 = 11.36;
+        const TAXA_2 = 21.08;
+        const KWH_PRECO = 1.14;
 
-        const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
-        let mesIndexAtual = new Date().getMonth();
+        let modoAtual = 'reais'; // 'reais' ou 'kwh'
 
-        // Dados simulados para carregamento imediato ou caso ocorra falha de rede
-        let dadosLocais = [
-            { cliente: 'Adilson', mes: 'outubro', consumo: 850, pago: true },
-            { cliente: 'João', mes: 'outubro', consumo: 620, pago: true },
-            { cliente: 'Inquilino', mes: 'outubro', consumo: 410, pago: false }
-        ];
+        function formatarMoeda(val) {
+            return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
 
-        window.onload = () => {
-            atualizarTela();
-            carregarDadosPlanilha();
+        function formatarNumero(val) {
+            return val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function setModo(modo) {
+            modoAtual = modo;
+            const btnReais = document.getElementById('btnModoReais');
+            const btnKwh = document.getElementById('btnModoKwh');
+            const simbolo = document.getElementById('simboloEntrada');
+            const labelEntrada = document.getElementById('labelEntrada');
+            const sublabelEntrada = document.getElementById('sublabelEntrada');
+            const explicacaoModo = document.getElementById('explicacaoModo');
+            const inputPrincipal = document.getElementById('inputPrincipal');
+
+            if (modo === 'reais') {
+                btnReais.className = "flex-1 py-2 text-xs font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 bg-white/15 text-white tab-glow";
+                btnKwh.className = "flex-1 py-2 text-xs font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+                simbolo.innerText = "R$";
+                simbolo.className = "text-2xl font-bold text-amber-400";
+                labelEntrada.innerText = "DIGITE O VALOR DA FATURA:";
+                sublabelEntrada.innerText = "Com taxas inclusas";
+                explicacaoModo.innerText = "Descontando a taxa de cada opção, você consome:";
+                inputPrincipal.value = "100";
+            } else {
+                btnKwh.className = "flex-1 py-2 text-xs font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 bg-white/15 text-white tab-glow";
+                btnReais.className = "flex-1 py-2 text-xs font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+                simbolo.innerText = "kWh";
+                simbolo.className = "text-2xl font-bold text-indigo-400";
+                labelEntrada.innerText = "DIGITE A QUANTIDADE DE KWH:";
+                sublabelEntrada.innerText = "Consumo puro";
+                explicacaoModo.innerText = "Somando o consumo + taxa de iluminação, você paga:";
+                inputPrincipal.value = "100";
+            }
+            calcular();
+        }
+
+        function calcular() {
+            const inputVal = parseFloat(document.getElementById('inputPrincipal').value) || 0;
+
+            if (modoAtual === 'reais') {
+                // Modo 1: Escreve Total em Reais -> Descobre kWh limpo em cada taxa
+                const sobra1 = Math.max(0, inputVal - TAXA_1);
+                const kwh1 = sobra1 / KWH_PRECO;
+
+                const sobra2 = Math.max(0, inputVal - TAXA_2);
+                const kwh2 = sobra2 / KWH_PRECO;
+
+                // Atualiza Rótulos
+                document.getElementById('lblLinha1_Q1').innerText = "Sobra p/ Consumo";
+                document.getElementById('valLinha1_Q1').innerText = formatarMoeda(sobra1);
+                document.getElementById('lblLinha2_Q1').innerText = "Consumo Real";
+                document.getElementById('valLinha2_Q1').innerText = `${formatarNumero(kwh1)} kWh`;
+
+                document.getElementById('lblLinha1_Q2').innerText = "Sobra p/ Consumo";
+                document.getElementById('valLinha1_Q2').innerText = formatarMoeda(sobra2);
+                document.getElementById('lblLinha2_Q2').innerText = "Consumo Real";
+                document.getElementById('valLinha2_Q2').innerText = `${formatarNumero(kwh2)} kWh`;
+
+            } else {
+                // Modo 2: Escreve kWh -> Descobre Total a Pagar (Consumo + Taxa)
+                const valorEnergiaPura = inputVal * KWH_PRECO;
+                const totalPagar1 = valorEnergiaPura + TAXA_1;
+                const totalPagar2 = valorEnergiaPura + TAXA_2;
+
+                // Atualiza Rótulos
+                document.getElementById('lblLinha1_Q1').innerText = "Valor sem iluminação";
+                document.getElementById('valLinha1_Q1').innerText = formatarMoeda(valorEnergiaPura);
+                document.getElementById('lblLinha2_Q1').innerText = "Total a Pagar";
+                document.getElementById('valLinha2_Q1').innerText = formatarMoeda(totalPagar1);
+
+                document.getElementById('lblLinha1_Q2').innerText = "Valor sem iluminação";
+                document.getElementById('valLinha1_Q2').innerText = formatarMoeda(valorEnergiaPura);
+                document.getElementById('lblLinha2_Q2').innerText = "Total a Pagar";
+                document.getElementById('valLinha2_Q2').innerText = formatarMoeda(totalPagar2);
+            }
+        }
+
+        window.onload = function() {
+            calcular();
         };
-
-        function mudarMes(direcao) {
-            mesIndexAtual += direcao;
-            if (mesIndexAtual < 0) mesIndexAtual = 11;
-            if (mesIndexAtual > 11) mesIndexAtual = 0;
-            atualizarTela();
-        }
-
-        function calcularLucroSocio(consumoKwh) {
-            const valorBruto = consumoKwh * TARIFA_KWH;
-            const faturamento = valorBruto * 0.80; // 20% desconto do cliente
-            const custoUsina = consumoKwh * CUSTO_KWH_USINA;
-            const lucroBase = faturamento - custoUsina;
-            
-            // Retorna exatamente a METADE (50%) para o sócio
-            return Math.max(0, lucroBase * 0.50);
-        }
-
-        function atualizarTela() {
-            const nomeMes = MESES[mesIndexAtual];
-            document.getElementById('label-mes').innerText = nomeMes;
-
-            const container = document.getElementById('lista-clientes');
-            container.innerHTML = '';
-
-            let totalSocioMes = 0;
-            let clientesEncontrados = 0;
-
-            dadosLocais.forEach(item => {
-                if (item.mes.toLowerCase() === nomeMes) {
-                    clientesEncontrados++;
-                    const lucroSocio = calcularLucroSocio(item.consumo);
-                    totalSocioMes += lucroSocio;
-
-                    const statusTexto = item.pago ? 'PAGO / RECEBIDO' : 'PENDENTE';
-                    const statusClasse = item.pago 
-                        ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' 
-                        : 'bg-amber-500/15 text-amber-400 border-amber-500/30';
-
-                    container.innerHTML += `
-                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
-                            <div>
-                                <h3 class="text-lg font-extrabold text-white capitalize">${item.cliente}</h3>
-                                <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-md border ${statusClasse}">
-                                    ${statusTexto}
-                                </span>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-xs text-slate-400 font-medium block">Sua Parte</span>
-                                <span class="text-xl font-black text-emerald-400">
-                                    R$ ${lucroSocio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </span>
-                            </div>
-                        </div>
-                    `;
-                }
-            });
-
-            if (clientesEncontrados === 0) {
-                container.innerHTML = `
-                    <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 text-center text-slate-400">
-                        <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-600 block"></i>
-                        Nenhum registro em ${nomeMes}.
-                    </div>
-                `;
-            }
-
-            document.getElementById('lucro-total-socio').innerText = `R$ ${totalSocioMes.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-            document.getElementById('qtd-clientes').innerText = `${clientesEncontrados} Cliente(s)`;
-        }
-
-        async function carregarDadosPlanilha() {
-            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
-            try {
-                const res = await fetch(url);
-                if (res.ok) {
-                    const text = await res.text();
-                    const linhas = text.split('\n').slice(1);
-                    const novosDados = [];
-
-                    linhas.forEach(linha => {
-                        const colunas = linha.split(',').map(c => c.replace(/"/g, '').trim());
-                        if (colunas.length >= 5) {
-                            const cliente = colunas[2];
-                            const consumo = parseFloat(colunas[1]) || 0;
-                            const mes = colunas[4] ? colunas[4].toLowerCase() : '';
-                            const status = colunas[6] ? colunas[6].toLowerCase() : '';
-
-                            if (cliente && mes) {
-                                novosDados.push({
-                                    cliente: cliente,
-                                    mes: mes,
-                                    consumo: consumo,
-                                    pago: status.includes('pago')
-                                });
-                            }
-                        }
-                    });
-
-                    if (novosDados.length > 0) {
-                        dadosLocais = novosDados;
-                        atualizarTela();
-                    }
-                }
-            } catch (e) {
-                console.log('Usando dados de reserva.');
-            }
-        }
-
-        function recarregarDados() {
-            carregarDadosPlanilha();
-        }
     </script>
 </body>
 </html>
