@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Solar Invest - Meu Lucro</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome (Ícones) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonte Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+            color: #ffffff;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body class="p-4 max-w-md mx-auto min-h-screen flex flex-col justify-between">
+
+    <div>
+        <!-- CABEÇALHO -->
+        <header class="flex items-center justify-between py-3 mb-4 border-b border-slate-800">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                    <i class="fa-solid fa-sun text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black text-white leading-tight">Solar Invest</h1>
+                    <p class="text-xs text-slate-400 font-medium">Painel do Sócio</p>
+                </div>
+            </div>
+            <button onclick="recarregarDados()" class="p-3 bg-slate-800 active:bg-slate-700 rounded-xl text-slate-300">
+                <i class="fa-solid fa-rotate-right text-lg"></i>
+            </button>
+        </header>
+
+        <!-- SELETOR DE MÊS GRANDE -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2 mb-5 flex items-center justify-between">
+            <button onclick="mudarMes(-1)" class="w-12 h-12 bg-slate-800 active:bg-emerald-600 rounded-xl flex items-center justify-center text-white text-lg">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <div class="text-center">
+                <span class="text-xs uppercase font-bold tracking-wider text-slate-400 block">Período</span>
+                <span id="label-mes" class="text-lg font-black text-white capitalize">Outubro</span>
+            </div>
+            <button onclick="mudarMes(1)" class="w-12 h-12 bg-slate-800 active:bg-emerald-600 rounded-xl flex items-center justify-center text-white text-lg">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- CARD PRINCIPAL: LUCRO TOTAL DO SÓCIO -->
+        <div class="bg-gradient-to-br from-emerald-900/40 via-slate-900 to-slate-900 border-2 border-emerald-500/50 rounded-3xl p-6 text-center mb-6 card-shadow">
+            <div class="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full mb-3">
+                <i class="fa-solid fa-wallet text-emerald-400 text-sm"></i>
+                <span class="text-xs font-bold uppercase text-emerald-300 tracking-wide">Sua Parte do Lucro</span>
+            </div>
+            
+            <div id="lucro-total-socio" class="text-4xl sm:text-5xl font-black text-emerald-400 tracking-tight my-2">
+                R$ 0,00
+            </div>
+            
+            <p class="text-xs text-slate-400 font-medium">
+                Valor líquido já dividido em 50%
+            </p>
+        </div>
+
+        <!-- TÍTULO DA LISTA -->
+        <div class="flex items-center justify-between mb-3 px-1">
+            <h2 class="text-base font-bold text-slate-200">Detalhamento por Cliente</h2>
+            <span id="qtd-clientes" class="text-xs font-bold bg-slate-800 text-slate-300 px-2.5 py-1 rounded-lg">3 Clientes</span>
+        </div>
+
+        <!-- LISTA DE CARDS DE CLIENTES -->
+        <div id="lista-clientes" class="space-y-3">
+            <!-- Os cards dos clientes serão gerados aqui dinamicamente -->
+        </div>
+    </div>
+
+    <!-- RODAPÉ SIMPLES -->
+    <footer class="text-center py-4 mt-6 text-slate-500 text-xs border-t border-slate-900">
+        Solar Invest • Atualizado automaticamente
+    </footer>
+
+    <script>
+        // CONFIGURAÇÕES E DADOS DA PLANILHA
+        const SHEET_ID = '1IxzUCFbGIxOMrCGnjfHNlB16ll64TKh75SDOV1oOnWw';
+        const TARIFA_KWH = 0.81;
+        const CUSTO_KWH_USINA = 0.175126;
+
+        const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+        let mesIndexAtual = new Date().getMonth();
+
+        // Dados simulados para carregamento imediato ou caso ocorra falha de rede
+        let dadosLocais = [
+            { cliente: 'Adilson', mes: 'outubro', consumo: 850, pago: true },
+            { cliente: 'João', mes: 'outubro', consumo: 620, pago: true },
+            { cliente: 'Inquilino', mes: 'outubro', consumo: 410, pago: false }
+        ];
+
+        window.onload = () => {
+            atualizarTela();
+            carregarDadosPlanilha();
+        };
+
+        function mudarMes(direcao) {
+            mesIndexAtual += direcao;
+            if (mesIndexAtual < 0) mesIndexAtual = 11;
+            if (mesIndexAtual > 11) mesIndexAtual = 0;
+            atualizarTela();
+        }
+
+        function calcularLucroSocio(consumoKwh) {
+            const valorBruto = consumoKwh * TARIFA_KWH;
+            const faturamento = valorBruto * 0.80; // 20% desconto do cliente
+            const custoUsina = consumoKwh * CUSTO_KWH_USINA;
+            const lucroBase = faturamento - custoUsina;
+            
+            // Retorna exatamente a METADE (50%) para o sócio
+            return Math.max(0, lucroBase * 0.50);
+        }
+
+        function atualizarTela() {
+            const nomeMes = MESES[mesIndexAtual];
+            document.getElementById('label-mes').innerText = nomeMes;
+
+            const container = document.getElementById('lista-clientes');
+            container.innerHTML = '';
+
+            let totalSocioMes = 0;
+            let clientesEncontrados = 0;
+
+            dadosLocais.forEach(item => {
+                if (item.mes.toLowerCase() === nomeMes) {
+                    clientesEncontrados++;
+                    const lucroSocio = calcularLucroSocio(item.consumo);
+                    totalSocioMes += lucroSocio;
+
+                    const statusTexto = item.pago ? 'PAGO / RECEBIDO' : 'PENDENTE';
+                    const statusClasse = item.pago 
+                        ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' 
+                        : 'bg-amber-500/15 text-amber-400 border-amber-500/30';
+
+                    container.innerHTML += `
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-extrabold text-white capitalize">${item.cliente}</h3>
+                                <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-md border ${statusClasse}">
+                                    ${statusTexto}
+                                </span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-slate-400 font-medium block">Sua Parte</span>
+                                <span class="text-xl font-black text-emerald-400">
+                                    R$ ${lucroSocio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            if (clientesEncontrados === 0) {
+                container.innerHTML = `
+                    <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 text-center text-slate-400">
+                        <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-600 block"></i>
+                        Nenhum registro em ${nomeMes}.
+                    </div>
+                `;
+            }
+
+            document.getElementById('lucro-total-socio').innerText = `R$ ${totalSocioMes.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('qtd-clientes').innerText = `${clientesEncontrados} Cliente(s)`;
+        }
+
+        async function carregarDadosPlanilha() {
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+            try {
+                const res = await fetch(url);
+                if (res.ok) {
+                    const text = await res.text();
+                    const linhas = text.split('\n').slice(1);
+                    const novosDados = [];
+
+                    linhas.forEach(linha => {
+                        const colunas = linha.split(',').map(c => c.replace(/"/g, '').trim());
+                        if (colunas.length >= 5) {
+                            const cliente = colunas[2];
+                            const consumo = parseFloat(colunas[1]) || 0;
+                            const mes = colunas[4] ? colunas[4].toLowerCase() : '';
+                            const status = colunas[6] ? colunas[6].toLowerCase() : '';
+
+                            if (cliente && mes) {
+                                novosDados.push({
+                                    cliente: cliente,
+                                    mes: mes,
+                                    consumo: consumo,
+                                    pago: status.includes('pago')
+                                });
+                            }
+                        }
+                    });
+
+                    if (novosDados.length > 0) {
+                        dadosLocais = novosDados;
+                        atualizarTela();
+                    }
+                }
+            } catch (e) {
+                console.log('Usando dados de reserva.');
+            }
+        }
+
+        function recarregarDados() {
+            carregarDadosPlanilha();
+        }
+    </script>
+</body>
+</html>
